@@ -16,6 +16,7 @@ from pybirdfy.client import (
     EVENT_CLIP_READY,
     EVENT_MOTION,
     EVENT_SPECIES,
+    BirdfyApiError,
     BirdfyAuthError,
     BirdfyClient,
     BirdfyDevice,
@@ -112,6 +113,29 @@ class RateLimitSession(FakeSession):
         if url.endswith("devices/v3"):
             self.calls.append((method, url, kwargs))
             return FakeResponse({"ret": 0, "msg": "too many requests"}, status=429)
+        return super().request(method, url, **kwargs)
+
+
+class WrappedResponseSession(FakeSession):
+    """Fixture session using common API response wrappers."""
+
+    def request(self, method, url, **kwargs):
+        self.calls.append((method, url, kwargs))
+        if url.endswith("users/login/v2"):
+            return FakeResponse({"ret": 0, "data": _fixture("login.json")})
+        if url.endswith("devices/v3"):
+            devices = _fixture("devices.json")["devices"]
+            return FakeResponse({"ret": 0, "data": {"deviceList": devices}})
+        return FakeResponse({"ret": 404, "msg": "not found"}, status=404)
+
+
+class DeviceListHttpFailureSession(FakeSession):
+    """Fixture session that fails the device list request."""
+
+    def request(self, method, url, **kwargs):
+        if url.endswith("devices/v3"):
+            self.calls.append((method, url, kwargs))
+            return FakeResponse({"ret": 503, "msg": "temporary"}, status=503)
         return super().request(method, url, **kwargs)
 
 
@@ -264,6 +288,42 @@ async def _test_rate_limit_error_is_explicit() -> None:
 
     with pytest.raises(BirdfyRateLimitError):
         await client.list_devices()
+
+
+def test_wrapped_login_and_device_list_responses_are_supported() -> None:
+    asyncio.run(_test_wrapped_login_and_device_list_responses_are_supported())
+
+
+async def _test_wrapped_login_and_device_list_responses_are_supported() -> None:
+    session = WrappedResponseSession()
+    client = BirdfyClient(session, base_url="http://127.0.0.1/v1/", request_interval=0)
+
+    await client.login("fixture-user@example.invalid", "test-password")
+    devices = await client.list_devices()
+
+    assert devices[0].identifier == "SIMULATED_DEVICE_001"
+
+
+def test_device_list_http_errors_include_safe_context() -> None:
+    asyncio.run(_test_device_list_http_errors_include_safe_context())
+
+
+async def _test_device_list_http_errors_include_safe_context() -> None:
+    client = BirdfyClient(
+        DeviceListHttpFailureSession(),
+        tokens=BirdfyTokens(token="token", refresh_token="refresh", user_id="123456"),
+        base_url="http://127.0.0.1/v1/",
+        request_interval=0,
+    )
+
+    with pytest.raises(BirdfyApiError) as exc_info:
+        await client.list_devices()
+
+    message = str(exc_info.value)
+    assert "device list" in message
+    assert "HTTP 503" in message
+    assert "token" not in message
+    assert "123456" not in message
 
 
 def test_transient_connection_errors_are_retried(monkeypatch) -> None:

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Added support for wrapped Birdfy API responses that use `data` and `deviceList`.
+- Improved setup failure messages with safe request context such as `device list (HTTP 503)`.
+- Kept diagnostics and logs free of tokens, device IDs, and media URLs.
+
 ## 0.1.0
 
 - Initial HACS-ready scaffold.

@@ -128,10 +128,18 @@ class BirdfyConnectionError(BirdfyError):
 class BirdfyApiError(BirdfyError):
     """The remote API returned an error response."""
 
-    def __init__(self, message: str, *, status: int | None = None, code: int | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status: int | None = None,
+        code: int | None = None,
+        operation: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.status = status
         self.code = code
+        self.operation = operation
 
 
 @dataclass(slots=True)
@@ -434,6 +442,7 @@ class BirdfyClient:
                 "platform": 0,
             },
             signed=False,
+            operation="login",
         )
         if not isinstance(payload, Mapping):
             raise BirdfyAuthError("Unexpected login response")
@@ -453,6 +462,7 @@ class BirdfyClient:
                 data={"token": self.tokens.token, "refreshToken": self.tokens.refresh_token},
                 signed=True,
                 allow_refresh=False,
+                operation="token refresh",
             )
             if not isinstance(payload, Mapping):
                 raise BirdfyAuthError("Unexpected token refresh response")
@@ -467,10 +477,19 @@ class BirdfyClient:
 
     async def list_devices(self, *, include_services: bool = False) -> list[BirdfyDevice]:
         """Return devices visible to the account."""
-        payload = await self._request("get", self.base_url, "devices/v3", signed=True)
-        devices_payload = payload.get("devices", payload) if isinstance(payload, Mapping) else payload
+        payload = await self._request(
+            "get",
+            self.base_url,
+            "devices/v3",
+            signed=True,
+            operation="device list",
+        )
+        devices_payload = _collection_payload(payload, "devices", "deviceList", "items", "list")
         if not isinstance(devices_payload, list):
-            raise BirdfyApiError("Unexpected devices response")
+            raise BirdfyApiError(
+                f"Unexpected devices response for device list ({_payload_shape(payload)})",
+                operation="device list",
+            )
 
         devices = [BirdfyDevice.from_api(item) for item in devices_payload if isinstance(item, Mapping)]
         if not include_services:
@@ -493,6 +512,7 @@ class BirdfyClient:
             self.capi2_base_url,
             f"devices/{serial_number}/services",
             signed=True,
+            operation="device services",
         )
         return payload if isinstance(payload, Mapping) else {"services": payload}
 
@@ -509,6 +529,7 @@ class BirdfyClient:
             f"devices/{device.serial_number}/play",
             data={"serialNumber": device.serial_number, "deviceSerial": device.serial_number},
             signed=True,
+            operation="stream source",
         )
         if not isinstance(payload, Mapping):
             return None
@@ -535,6 +556,7 @@ class BirdfyClient:
             "pubstream",
             params={"serialNumber": serial_number},
             signed=True,
+            operation="public stream",
         )
         return payload if isinstance(payload, Mapping) else {"stream": payload}
 
@@ -559,8 +581,15 @@ class BirdfyClient:
         params: dict[str, str] = {}
         if since:
             params["since"] = since.isoformat()
-        payload = await self._request("get", self.base_url, "events", params=params, signed=True)
-        events_payload = payload.get("events", payload) if isinstance(payload, Mapping) else payload
+        payload = await self._request(
+            "get",
+            self.base_url,
+            "events",
+            params=params,
+            signed=True,
+            operation="events",
+        )
+        events_payload = _collection_payload(payload, "events", "items", "list")
         if not isinstance(events_payload, list):
             return []
         return [BirdfyEvent.from_api(item) for item in events_payload if isinstance(item, Mapping)]
@@ -582,6 +611,7 @@ class BirdfyClient:
         params: Mapping[str, Any] | None = None,
         signed: bool,
         allow_refresh: bool = True,
+        operation: str | None = None,
     ) -> Any:
         url = path if path.startswith(("http://", "https://")) else urljoin(_ensure_slash(base_url), path)
         headers = self._headers(signed=signed)
@@ -607,15 +637,24 @@ class BirdfyClient:
 
             status = getattr(response, "status", None)
             if status == 429:
-                raise BirdfyRateLimitError("Birdfy cloud API rate limit exceeded")
+                raise BirdfyRateLimitError(
+                    f"Birdfy cloud API rate limit exceeded for {_operation_label(operation, path)}"
+                )
             if status in (401, 403):
                 if signed and allow_refresh:
                     await self.refresh_tokens()
                     headers = self._headers(signed=signed)
                     continue
-                raise BirdfyAuthError("Birdfy rejected the account credentials")
+                raise BirdfyAuthError(
+                    f"Birdfy rejected the account credentials for {_operation_label(operation, path)}"
+                )
             if status and status >= 400:
-                raise BirdfyApiError("Birdfy cloud API request failed", status=status)
+                raise BirdfyApiError(
+                    "Birdfy cloud API request failed for "
+                    f"{_operation_label(operation, path)} (HTTP {status})",
+                    status=status,
+                    operation=operation,
+                )
             if isinstance(payload, Mapping):
                 code = _as_int(payload.get("ret"))
                 if code and code != 0:
@@ -623,9 +662,14 @@ class BirdfyClient:
                         await self.refresh_tokens()
                         headers = self._headers(signed=signed)
                         continue
-                    message = _as_str(payload.get("msg")) or f"Birdfy API error {code}"
-                    raise BirdfyApiError(message, status=status, code=code)
-            return payload
+                    raise BirdfyApiError(
+                        "Birdfy cloud API returned an error for "
+                        f"{_operation_label(operation, path)} (code {code})",
+                        status=status,
+                        code=code,
+                        operation=operation,
+                    )
+            return _unwrap_payload(payload)
         raise BirdfyConnectionError("Birdfy cloud API request failed after retries")
 
     async def _request_raw(self, method: str, url: str, *, signed: bool) -> bytes:
@@ -736,6 +780,34 @@ def _first(payload: Mapping[str, Any], *keys: str) -> Any:
         if key in payload and payload[key] not in (None, ""):
             return payload[key]
     return None
+
+
+def _unwrap_payload(payload: Any) -> Any:
+    if isinstance(payload, Mapping) and "data" in payload and payload["data"] not in (None, ""):
+        return payload["data"]
+    return payload
+
+
+def _collection_payload(payload: Any, *keys: str) -> Any:
+    payload = _unwrap_payload(payload)
+    if isinstance(payload, Mapping):
+        return _first(payload, *keys) or payload
+    return payload
+
+
+def _payload_shape(payload: Any) -> str:
+    if isinstance(payload, Mapping):
+        keys = ", ".join(sorted(str(key) for key in payload)[:10])
+        return f"mapping keys: {keys}" if keys else "empty mapping"
+    return f"type: {type(payload).__name__}"
+
+
+def _operation_label(operation: str | None, path: str) -> str:
+    if operation:
+        return operation
+    if path.startswith(("http://", "https://")):
+        return "remote request"
+    return path
 
 
 def _parse_ability(value: Any) -> Mapping[str, Any]:
