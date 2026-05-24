@@ -22,6 +22,9 @@ See [docs/HARDWARE_VALIDATION.md](docs/HARDWARE_VALIDATION.md) for the next real
 Use [docs/HARDWARE_TEST_RESULTS_TEMPLATE.md](docs/HARDWARE_TEST_RESULTS_TEMPLATE.md) to record sanitized results.
 If your Birdfy model exposes app-initiated RTMP livestreaming, see
 [docs/LOCAL_RTMP_MEDIAMTX.md](docs/LOCAL_RTMP_MEDIAMTX.md) for a local MediaMTX bridge test.
+If you want to replace the vendor software or build a local hardware transplant, see
+[docs/LOCAL_FIRMWARE_BRINGUP.md](docs/LOCAL_FIRMWARE_BRINGUP.md) and
+[docs/adr/0002-local-firmware-or-hardware-replacement.md](docs/adr/0002-local-firmware-or-hardware-replacement.md).
 
 ## Known Limitations
 

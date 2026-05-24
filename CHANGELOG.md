@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added a local RTMP/MediaMTX bridge guide for Birdfy models that support app-initiated livestreaming but do not expose direct LAN RTSP/ONVIF/snapshot endpoints.
+- Added a local firmware/hardware bring-up checklist and ADR for pursuing owner-controlled operation without app-protection bypasses or credential extraction.
 
 ## 0.1.5
 
