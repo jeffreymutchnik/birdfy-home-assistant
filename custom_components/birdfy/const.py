@@ -12,6 +12,8 @@ CONF_BASE_URL: Final = "base_url"
 CONF_API2_BASE_URL: Final = "api2_base_url"
 CONF_CAPI2_BASE_URL: Final = "capi2_base_url"
 CONF_CAPIV3_BASE_URL: Final = "capiv3_base_url"
+CONF_LOCAL_SNAPSHOT_URL: Final = "local_snapshot_url"
+CONF_LOCAL_STREAM_URL: Final = "local_stream_url"
 CONF_REFRESH_INTERVAL: Final = "refresh_interval"
 
 DEFAULT_SCAN_INTERVAL: Final = timedelta(minutes=5)

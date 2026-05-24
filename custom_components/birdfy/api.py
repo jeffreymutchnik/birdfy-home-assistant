@@ -92,6 +92,8 @@ SENSITIVE_KEYS = {
     "email",
     "image_url",
     "local_endpoint",
+    "local_snapshot_url",
+    "local_stream_url",
     "password",
     "refresh_token",
     "secret",

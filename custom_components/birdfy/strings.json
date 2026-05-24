@@ -38,7 +38,9 @@
           "base_url": "Primary API base URL",
           "api2_base_url": "Media API base URL",
           "capi2_base_url": "Service API base URL",
-          "capiv3_base_url": "Stream API base URL"
+          "capiv3_base_url": "Stream API base URL",
+          "local_stream_url": "Manual local stream URL",
+          "local_snapshot_url": "Manual local snapshot URL"
         }
       }
     }

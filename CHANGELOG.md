@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+
+- Added optional manual local stream and snapshot URL overrides for user-authorized camera media sources.
+- Camera entities now prefer manual local media URLs before falling back to Birdfy/Netvue cloud-discovered media.
+- Documented the local-video-first path for replacing Birdfy AI with a future private detection pipeline.
+
 ## 0.1.4
 
 - Broadened real-device parsing aliases for online, firmware, battery, and Wi-Fi signal fields.

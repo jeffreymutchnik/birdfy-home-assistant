@@ -59,6 +59,7 @@ Do not enable siren, spotlight, talk, microphone, privacy mode, notification tog
 - Confirm snapshot image loading works without exposing the URL in logs.
 - If live stream is available, confirm Home Assistant can play it through the camera card.
 - If live stream fails, record the sanitized response shape only. Do not paste full media URLs.
+- If you discover a lawful local RTSP/HLS/snapshot source, enter it in the Birdfy options flow and verify the Home Assistant camera renders from the manual media override.
 - Trigger or wait for a bird/motion event and confirm the latest event image updates.
 - If cloud clips are exposed, record whether the URL is direct, signed, expiring, WebRTC/Kinesis, or app-only.
 

@@ -26,6 +26,8 @@ from .const import (
     CONF_BASE_URL,
     CONF_CAPI2_BASE_URL,
     CONF_CAPIV3_BASE_URL,
+    CONF_LOCAL_SNAPSHOT_URL,
+    CONF_LOCAL_STREAM_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
     CONF_UDID,
@@ -47,6 +49,8 @@ OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(CONF_API2_BASE_URL, default=API2_BASE_URL): str,
         vol.Optional(CONF_CAPI2_BASE_URL, default=CAPI2_BASE_URL): str,
         vol.Optional(CONF_CAPIV3_BASE_URL, default=CAPIV3_BASE_URL): str,
+        vol.Optional(CONF_LOCAL_STREAM_URL, default=""): str,
+        vol.Optional(CONF_LOCAL_SNAPSHOT_URL, default=""): str,
     }
 )
 
@@ -155,6 +159,8 @@ class BirdfyOptionsFlow(config_entries.OptionsFlow):
             CONF_API2_BASE_URL: self._config_entry.options.get(CONF_API2_BASE_URL, API2_BASE_URL),
             CONF_CAPI2_BASE_URL: self._config_entry.options.get(CONF_CAPI2_BASE_URL, CAPI2_BASE_URL),
             CONF_CAPIV3_BASE_URL: self._config_entry.options.get(CONF_CAPIV3_BASE_URL, CAPIV3_BASE_URL),
+            CONF_LOCAL_STREAM_URL: self._config_entry.options.get(CONF_LOCAL_STREAM_URL, ""),
+            CONF_LOCAL_SNAPSHOT_URL: self._config_entry.options.get(CONF_LOCAL_SNAPSHOT_URL, ""),
         }
         return self.async_show_form(
             step_id="init",

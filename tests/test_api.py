@@ -560,6 +560,8 @@ def test_redact_data_removes_sensitive_values() -> None:
             "token": "secret",
             "devices": [{"serial_number": "SIMULATED_DEVICE_001", "name": "Backyard"}],
             "nested": {"image_url": "https://example.invalid/image.jpg"},
+            "local_stream_url": "rtsp://example.invalid/live",
+            "local_snapshot_url": "http://example.invalid/snapshot.jpg",
         }
     )
 
@@ -567,6 +569,8 @@ def test_redact_data_removes_sensitive_values() -> None:
     assert redacted["devices"][0]["serial_number"] == "**REDACTED**"
     assert redacted["devices"][0]["name"] == "Backyard"
     assert redacted["nested"]["image_url"] == "**REDACTED**"
+    assert redacted["local_stream_url"] == "**REDACTED**"
+    assert redacted["local_snapshot_url"] == "**REDACTED**"
 
 
 def test_redact_data_handles_camel_case_sensitive_keys() -> None:

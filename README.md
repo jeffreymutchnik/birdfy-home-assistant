@@ -11,6 +11,7 @@ This is an early production scaffold. It includes:
 - Device discovery through the public Netvue web API surface.
 - Camera still image support when the device payload exposes a snapshot URL.
 - Direct stream support only when the API returns an ffmpeg-compatible URL.
+- Optional manual local stream/snapshot URL overrides for user-authorized camera media sources.
 - Read-only sensors for battery, Wi-Fi signal, firmware, latest species, and latest event time when data is present.
 - Binary sensors for online state plus recent motion/bird events from supported event sources.
 - Event/image entities backed by simulator fixtures today.
@@ -27,6 +28,14 @@ Birdfy/Netvue does not publish an official Home Assistant or developer API. This
 Write controls are intentionally not exposed yet. That includes siren, spotlight, microphone/speaker/talk, privacy/sleep mode, notification toggles, detection sensitivity, and detection zones. These features exist in the app, but the integration will not expose them until a stable and safe API path is verified with hardware.
 
 Birdfy live video may use AWS Kinesis/WebRTC data rather than a direct RTSP/HLS URL. Home Assistant camera streaming is enabled only when the API returns a direct stream URL that ffmpeg can consume.
+
+The integration does not bypass Birdfy app protections or paid cloud features. If you discover a lawful local media source for your own feeder, such as RTSP, HLS, or an HTTP snapshot endpoint, add it in **Configure > Options** as a manual stream or snapshot URL. Manual media overrides are treated as secrets and are redacted from diagnostics.
+
+## Local AI Direction
+
+The long-term privacy-first path is to use Birdfy/Netvue account access for discovery where needed, but run detection on user-authorized media frames inside Home Assistant or a local companion service. A local detector can consume the camera entity, a manual RTSP/HLS stream, or a snapshot URL and then publish Home Assistant events such as bird detected, species recognized, confidence, thumbnail, and clip metadata.
+
+This repository does not ship a bird-recognition model yet. The next safe milestone is validating a reliable frame source from the hardware, then adding a local inference adapter that can use an existing model/server without sending video to Birdfy or another cloud provider by default.
 
 ## Installation
 
@@ -68,6 +77,7 @@ The simulator covers login, token refresh, device discovery, service metadata, s
 | Battery/Wi-Fi/firmware | Requires hardware validation | Exposed only if returned by the device payload. |
 | Camera snapshot | Probably supported | Works when the payload includes a snapshot/cover URL. |
 | Live stream | Requires hardware validation | Enabled only for direct RTSP/HLS/HTTP stream URLs. Kinesis/WebRTC is documented but not implemented. |
+| Manual local media URL | Supported | Optional user-provided RTSP/HLS/snapshot URL for owned devices; redacted from diagnostics. |
 | Motion/bird/species events | Requires hardware validation | Fixture-backed now; no official event history endpoint is documented. |
 | Highlight/Recap share links | Confirmed low-risk future path | Public community integrations show this can support read-only AI summaries without account control APIs. |
 | Siren/light/talk/privacy/settings | Unsafe/unsupported | App controls exist, but no stable public write API has been verified. |
@@ -79,6 +89,7 @@ The simulator covers login, token refresh, device discovery, service metadata, s
 - Logs avoid request payloads and secrets.
 - The integration uses cloud APIs only after the user configures account access.
 - Media URLs are treated as bearer secrets, even when they are temporary or signed.
+- Manual local stream and snapshot URLs are redacted from diagnostics.
 - Camera snapshots, clips, thumbnails, and live stream segments are not persisted by default.
 - Do not expose Home Assistant directly to the public internet; prefer Home Assistant Cloud, a VPN, or a carefully configured HTTPS reverse proxy.
 

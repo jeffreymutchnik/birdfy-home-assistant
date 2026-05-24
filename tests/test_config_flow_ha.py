@@ -23,6 +23,8 @@ from custom_components.birdfy.api import BirdfyAuthError, BirdfyConnectionError,
 from custom_components.birdfy.config_flow import BirdfyConfigFlow
 from custom_components.birdfy.const import (
     CONF_BASE_URL,
+    CONF_LOCAL_SNAPSHOT_URL,
+    CONF_LOCAL_STREAM_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
     CONF_UDID,
@@ -170,11 +172,15 @@ async def test_options_flow_updates_refresh_interval(hass: Any) -> None:
             "api2_base_url": "https://api2.nvts.co/",
             "capi2_base_url": "https://capi2.nvts.co/",
             "capiv3_base_url": "https://capiv3.nvts.co/",
+            CONF_LOCAL_STREAM_URL: "rtsp://127.0.0.1/live",
+            CONF_LOCAL_SNAPSHOT_URL: "http://127.0.0.1/snapshot.jpg",
         },
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_REFRESH_INTERVAL] == 3
+    assert result["data"][CONF_LOCAL_STREAM_URL] == "rtsp://127.0.0.1/live"
+    assert result["data"][CONF_LOCAL_SNAPSHOT_URL] == "http://127.0.0.1/snapshot.jpg"
 
 
 async def test_redacted_device_payload_omits_private_identifiers() -> None:
