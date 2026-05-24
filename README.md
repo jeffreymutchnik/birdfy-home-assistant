@@ -25,6 +25,8 @@ If your Birdfy model exposes app-initiated RTMP livestreaming, see
 If you want to replace the vendor software or build a local hardware transplant, see
 [docs/LOCAL_FIRMWARE_BRINGUP.md](docs/LOCAL_FIRMWARE_BRINGUP.md) and
 [docs/adr/0002-local-firmware-or-hardware-replacement.md](docs/adr/0002-local-firmware-or-hardware-replacement.md).
+The current public hardware evidence map is in
+[docs/HARDWARE_EVIDENCE.md](docs/HARDWARE_EVIDENCE.md).
 
 ## Known Limitations
 

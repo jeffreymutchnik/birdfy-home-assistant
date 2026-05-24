@@ -24,11 +24,18 @@ Battery/solar details:
 Observed LAN services:
 ```
 
+For repeatable single-device LAN checks, use
+[LOCAL_DEVICE_DISCOVERY.md](LOCAL_DEVICE_DISCOVERY.md). Do not use subnet scans
+or publish raw discovery output that contains real network identifiers.
+
 Use public filings before opening the enclosure:
 
 - FCC ID pages for external/internal photos, manuals, and test reports.
 - Birdfy/Netvue support pages for model-specific livestream and storage support.
 - Community reports only as hints, not proof for your exact revision.
+
+See [HARDWARE_EVIDENCE.md](HARDWARE_EVIDENCE.md) for the current public
+model-family map.
 
 ## Physical Inspection
 

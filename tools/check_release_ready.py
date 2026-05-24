@@ -44,7 +44,8 @@ def _check_manifest(manifest: dict[str, object]) -> list[str]:
         findings.append("manifest.json domain must be 'birdfy'")
     if manifest.get("config_flow") is not True:
         findings.append("manifest.json must declare config_flow true")
-    if "stream" not in manifest.get("dependencies", []):
+    dependencies = manifest.get("dependencies", [])
+    if not isinstance(dependencies, list) or "stream" not in dependencies:
         findings.append("manifest.json must keep stream dependency for camera playback")
     if not manifest.get("codeowners"):
         findings.append("manifest.json must include at least one code owner")

@@ -6,6 +6,11 @@ Research date: 2026-05-14
 
 No official Birdfy/Netvue developer API documentation was found. Birdfy documents the mobile app, web client, cloud service, live viewing, AI recognition, and account-linked integrations with Alexa/Google, but not a public automation API.
 
+Hardware research shows Birdfy/Netvue uses multiple model families rather than
+one uniform camera platform. See [HARDWARE_EVIDENCE.md](HARDWARE_EVIDENCE.md)
+before assuming any local firmware, RTMP, or stream capability applies across
+models.
+
 The public Netvue web client at `my.netvue.com` exposes JavaScript references to:
 
 - `users/login/v2`
