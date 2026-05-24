@@ -25,6 +25,7 @@ from custom_components.birdfy.const import (
     CONF_BASE_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
+    CONF_UDID,
     DOMAIN,
 )
 from custom_components.birdfy.coordinator import redacted_device_payload
@@ -47,6 +48,8 @@ async def test_user_flow_creates_entry(hass: Any, monkeypatch: pytest.MonkeyPatc
     """Successful credentials create a config entry without storing a password."""
 
     async def validate(self: BirdfyConfigFlow, user_input: dict[str, Any]) -> BirdfyTokens:
+        assert isinstance(user_input[CONF_UDID], str)
+        assert len(user_input[CONF_UDID]) == 32
         return BirdfyTokens(
             token="access-token",
             refresh_token="refresh-token",
@@ -71,6 +74,7 @@ async def test_user_flow_creates_entry(hass: Any, monkeypatch: pytest.MonkeyPatc
     assert result["title"] == "fixture-user@example.invalid"
     assert CONF_PASSWORD not in result["data"]
     assert result["data"][CONF_TOKEN_DATA]["token"] == "access-token"
+    assert len(result["data"][CONF_UDID]) == 32
 
 
 @pytest.mark.parametrize(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from typing import Any
 
 import voluptuous as vol
@@ -27,6 +28,7 @@ from .const import (
     CONF_CAPIV3_BASE_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
+    CONF_UDID,
     DOMAIN,
 )
 
@@ -62,8 +64,10 @@ class BirdfyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
+            udid = _new_udid()
+            validation_input = {**user_input, CONF_UDID: udid}
             try:
-                tokens = await self._async_validate_user_input(user_input)
+                tokens = await self._async_validate_user_input(validation_input)
             except BirdfyAuthError:
                 errors["base"] = "invalid_auth"
             except BirdfyConnectionError:
@@ -75,6 +79,7 @@ class BirdfyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                     CONF_USERNAME: user_input[CONF_USERNAME],
                     CONF_BASE_URL: user_input[CONF_BASE_URL],
                     CONF_TOKEN_DATA: tokens.as_dict(),
+                    CONF_UDID: udid,
                 }
                 return self.async_create_entry(title=tokens.username or user_input[CONF_USERNAME], data=data)
 
@@ -89,8 +94,10 @@ class BirdfyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
         """Confirm reauthentication credentials."""
         errors: dict[str, str] = {}
         if user_input is not None:
+            udid = _entry_udid(self._reauth_entry)
+            validation_input = {**user_input, CONF_UDID: udid}
             try:
-                tokens = await self._async_validate_user_input(user_input)
+                tokens = await self._async_validate_user_input(validation_input)
             except BirdfyAuthError:
                 errors["base"] = "invalid_auth"
             except BirdfyConnectionError:
@@ -104,6 +111,7 @@ class BirdfyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                         CONF_USERNAME: user_input[CONF_USERNAME],
                         CONF_BASE_URL: user_input[CONF_BASE_URL],
                         CONF_TOKEN_DATA: tokens.as_dict(),
+                        CONF_UDID: udid,
                     },
                 )
         return self.async_show_form(
@@ -114,7 +122,11 @@ class BirdfyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
 
     async def _async_validate_user_input(self, user_input: dict[str, Any]):
         session = async_get_clientsession(self.hass)
-        client = BirdfyClient(session, base_url=user_input.get(CONF_BASE_URL, DEFAULT_BASE_URL))
+        client = BirdfyClient(
+            session,
+            base_url=user_input.get(CONF_BASE_URL, DEFAULT_BASE_URL),
+            udid=user_input.get(CONF_UDID),
+        )
         return await client.login(user_input[CONF_USERNAME], user_input[CONF_PASSWORD])
 
     @staticmethod
@@ -148,3 +160,17 @@ class BirdfyOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(OPTIONS_SCHEMA, current),
         )
+
+
+def _new_udid() -> str:
+    """Return a stable per-config-entry Netvue client identifier."""
+    return secrets.token_hex(16)
+
+
+def _entry_udid(entry: config_entries.ConfigEntry | None) -> str:
+    """Return the stored client identifier, or create one for legacy entries."""
+    if entry is not None:
+        udid = entry.data.get(CONF_UDID)
+        if isinstance(udid, str) and udid:
+            return udid
+    return _new_udid()

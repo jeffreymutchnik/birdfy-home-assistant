@@ -64,7 +64,7 @@ class BirdfyCoordinator(DataUpdateCoordinator[BirdfyData]):
         try:
             devices = await self.client.list_devices(include_services=True)
         except BirdfyAuthError as err:
-            raise ConfigEntryAuthFailed("Birdfy authentication expired") from err
+            raise ConfigEntryAuthFailed(str(err) or "Birdfy authentication expired") from err
         except BirdfyConnectionError as err:
             raise UpdateFailed(f"Unable to reach Birdfy cloud API: {err}") from err
         except BirdfyError as err:
@@ -109,7 +109,7 @@ class BirdfyEventCoordinator(DataUpdateCoordinator[dict[str, BirdfyEvent]]):
         try:
             events = await self.client.list_events(since=self._last_event_time)
         except BirdfyAuthError as err:
-            raise ConfigEntryAuthFailed("Birdfy authentication expired") from err
+            raise ConfigEntryAuthFailed(str(err) or "Birdfy authentication expired") from err
         except BirdfyError as err:
             raise UpdateFailed(f"Unable to update Birdfy events: {err}") from err
 

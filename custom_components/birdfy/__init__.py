@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from datetime import timedelta
 from typing import Any
 
@@ -31,6 +32,7 @@ from .const import (
     CONF_CAPIV3_BASE_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
+    CONF_UDID,
     DOMAIN,
     PLATFORMS,
     STARTUP_MESSAGE,
@@ -55,10 +57,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: BirdfyConfigEntry) -> bo
     session = async_get_clientsession(hass)
     token_data = entry.data.get(CONF_TOKEN_DATA)
     tokens = BirdfyTokens.from_dict(token_data) if isinstance(token_data, dict) else None
+    udid = entry.data.get(CONF_UDID)
+    if not isinstance(udid, str) or not udid:
+        udid = secrets.token_hex(16)
+        data = dict(entry.data)
+        data[CONF_UDID] = udid
+        hass.config_entries.async_update_entry(entry, data=data)
 
     async def _async_store_tokens(new_tokens: BirdfyTokens) -> None:
         data = dict(entry.data)
         data[CONF_TOKEN_DATA] = new_tokens.as_dict()
+        data[CONF_UDID] = udid
         hass.config_entries.async_update_entry(entry, data=data)
 
     client = BirdfyClient(
@@ -68,6 +77,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BirdfyConfigEntry) -> bo
         api2_base_url=entry.options.get(CONF_API2_BASE_URL, entry.data.get(CONF_API2_BASE_URL, API2_BASE_URL)),
         capi2_base_url=entry.options.get(CONF_CAPI2_BASE_URL, entry.data.get(CONF_CAPI2_BASE_URL, CAPI2_BASE_URL)),
         capiv3_base_url=entry.options.get(CONF_CAPIV3_BASE_URL, entry.data.get(CONF_CAPIV3_BASE_URL, CAPIV3_BASE_URL)),
+        udid=udid,
         request_interval=0.25,
         token_update_callback=_async_store_tokens,
     )

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Persist the Netvue web client identifier created during login and reuse it during Home Assistant setup, token refresh, and signed API requests.
+- Added safe auth error metadata so reauth loops show which cloud operation/code failed without exposing tokens or device identifiers.
+- Redact Netvue client identifiers from diagnostics and test fixtures.
+
 ## 0.1.2
 
 - Matched token-refresh handling to the current public Netvue web client error codes.

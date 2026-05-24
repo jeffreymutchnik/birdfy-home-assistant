@@ -104,9 +104,13 @@ SENSITIVE_KEYS = {
     "stream",
     "stream_url",
     "token",
+    "ucid",
     "url",
+    "udid",
     "user_id",
     "username",
+    "x-nvs-ucid",
+    "x-nvs-udid",
 }
 
 SENSITIVE_KEYS_NORMALIZED = {
@@ -132,6 +136,19 @@ class BirdfyError(Exception):
 
 class BirdfyAuthError(BirdfyError):
     """Authentication failed or credentials expired."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status: int | None = None,
+        code: int | None = None,
+        operation: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status = status
+        self.code = code
+        self.operation = operation
 
 
 class BirdfyRateLimitError(BirdfyError):
@@ -489,7 +506,12 @@ class BirdfyClient:
                 )
             except BirdfyApiError as err:
                 if err.status in (400, 401, 403) or err.code in REAUTH_RET_CODES:
-                    raise BirdfyAuthError("Birdfy token refresh failed; reauthentication is required") from err
+                    raise BirdfyAuthError(
+                        "Birdfy token refresh failed; reauthentication is required",
+                        status=err.status,
+                        code=err.code,
+                        operation="token refresh",
+                    ) from err
                 raise
             if not isinstance(payload, Mapping):
                 raise BirdfyAuthError("Unexpected token refresh response")
@@ -677,10 +699,19 @@ class BirdfyClient:
                 )
             if code in REAUTH_RET_CODES:
                 raise BirdfyAuthError(
-                    f"Birdfy authentication expired for {_operation_label(operation, path)}"
+                    "Birdfy authentication expired for "
+                    f"{_operation_label(operation, path)} (code {code})",
+                    status=status,
+                    code=code,
+                    operation=operation,
                 )
             if code in LOGIN_AUTH_RET_CODES and operation == "login":
-                raise BirdfyAuthError("Birdfy rejected the account credentials for login")
+                raise BirdfyAuthError(
+                    f"Birdfy rejected the account credentials for login (code {code})",
+                    status=status,
+                    code=code,
+                    operation=operation,
+                )
             if code in TOKEN_REFRESH_RET_CODES and signed and allow_refresh:
                 await self.refresh_tokens()
                 headers = self._headers(signed=signed)
@@ -695,7 +726,11 @@ class BirdfyClient:
                     headers = self._headers(signed=signed)
                     continue
                 raise BirdfyAuthError(
-                    f"Birdfy rejected the account credentials for {_operation_label(operation, path)}"
+                    "Birdfy rejected the account credentials for "
+                    f"{_operation_label(operation, path)} (HTTP {status})",
+                    status=status,
+                    code=code,
+                    operation=operation,
                 )
             if status and status >= 400:
                 raise BirdfyApiError(

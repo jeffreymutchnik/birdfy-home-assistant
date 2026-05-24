@@ -34,6 +34,7 @@ STARTUP_MESSAGE: Final = (
 
 CONF_TOKEN_DATA: Final = "token_data"
 CONF_USERNAME: Final = "username"
+CONF_UDID: Final = "udid"
 
 ATTR_SERIAL_NUMBER: Final = "serial_number"
 ATTR_MODEL: Final = "model"

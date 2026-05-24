@@ -358,6 +358,26 @@ async def _test_token_update_callback_runs_after_login_and_refresh() -> None:
     assert seen == ["REDACTED_TEST_ACCESS_VALUE", "new-token"]
 
 
+def test_signed_requests_use_configured_udid() -> None:
+    asyncio.run(_test_signed_requests_use_configured_udid())
+
+
+async def _test_signed_requests_use_configured_udid() -> None:
+    session = WrappedResponseSession()
+    client = BirdfyClient(
+        session,
+        tokens=BirdfyTokens(token="token", refresh_token="refresh", user_id="123456"),
+        base_url="http://127.0.0.1/v1/",
+        request_interval=0,
+        udid="stable-client-id",
+    )
+
+    await client.list_devices()
+
+    device_call = next(call for call in session.calls if call[1].endswith("devices/v3"))
+    assert device_call[2]["headers"]["x-nvs-udid"] == "stable-client-id"
+
+
 def test_stream_source_returns_direct_urls_only() -> None:
     asyncio.run(_test_stream_source_returns_direct_urls_only())
 
@@ -567,6 +587,26 @@ def test_redact_data_handles_camel_case_sensitive_keys() -> None:
         "snapshotUrl": "**REDACTED**",
         "clipUrl": "**REDACTED**",
         "userID": "**REDACTED**",
+        "displayName": "Backyard",
+    }
+
+
+def test_redact_data_removes_session_identifiers() -> None:
+    redacted = redact_data(
+        {
+            "udid": "stable-client-id",
+            "ucid": "public-client-id",
+            "x-nvs-udid": "header-client-id",
+            "x-nvs-ucid": "header-app-id",
+            "displayName": "Backyard",
+        }
+    )
+
+    assert redacted == {
+        "udid": "**REDACTED**",
+        "ucid": "**REDACTED**",
+        "x-nvs-udid": "**REDACTED**",
+        "x-nvs-ucid": "**REDACTED**",
         "displayName": "Backyard",
     }
 
