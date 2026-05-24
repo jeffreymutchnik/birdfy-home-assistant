@@ -1,0 +1,17 @@
+{
+  "devices": [
+    {
+      "serialNumber": "SIMULATED_DEVICE_001",
+      "deviceName": "Backyard Birdfy",
+      "modelName": "NetvueBirdfy",
+      "manufacturer": "Birdfy",
+      "firmwareVersion": "1.2.3",
+      "online": true,
+      "battery": 87,
+      "wifiSignal": 71,
+      "region": "us",
+      "snapshotUrl": "http://127.0.0.1:8765/media/snapshot.jpg",
+      "ability": "{\"CN\":17842185,\"CN2\":335683849,\"VI\":0}"
+    }
+  ]
+}

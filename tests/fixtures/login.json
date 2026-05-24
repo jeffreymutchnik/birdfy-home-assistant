@@ -1,0 +1,11 @@
+{
+  "userID": 123456,
+  "userName": "fixture-user@example.invalid",
+  "region": "us",
+  "localEndpoint": "fixture-user@example.invalid",
+  "iconBucket": "",
+  "icon": "",
+  "nickName": "Birder",
+  "token": "REDACTED_TEST_ACCESS_VALUE",
+  "refreshToken": "REDACTED_TEST_REFRESH_VALUE"
+}

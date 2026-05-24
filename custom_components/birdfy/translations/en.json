@@ -1,0 +1,108 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Birdfy",
+        "description": "Sign in with your Birdfy or Netvue account. This integration uses the public web client API surface and stores tokens in Home Assistant's config entry storage.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "base_url": "API base URL"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Birdfy",
+        "description": "Your Birdfy credentials expired or were revoked. Enter the same account credentials again.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "base_url": "API base URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to Birdfy.",
+      "invalid_auth": "Invalid Birdfy credentials."
+    },
+    "abort": {
+      "already_configured": "This Birdfy account is already configured.",
+      "wrong_account": "Please reauthenticate with the same Birdfy account."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Birdfy options",
+        "data": {
+          "refresh_interval": "Refresh interval in minutes",
+          "base_url": "Primary API base URL",
+          "api2_base_url": "Media API base URL",
+          "capi2_base_url": "Service API base URL",
+          "capiv3_base_url": "Stream API base URL"
+        }
+      }
+    }
+  },
+  "entity": {
+    "camera": {
+      "camera": {
+        "name": "Camera"
+      }
+    },
+    "image": {
+      "latest_event_image": {
+        "name": "Latest event image"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "wifi_signal": {
+        "name": "Wi-Fi signal"
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "last_species": {
+        "name": "Last species"
+      },
+      "last_event_time": {
+        "name": "Last event time"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "motion": {
+        "name": "Motion"
+      },
+      "bird_detected": {
+        "name": "Bird detected"
+      },
+      "sd_card": {
+        "name": "SD card"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      },
+      "sync_events": {
+        "name": "Sync events"
+      }
+    },
+    "event": {
+      "activity": {
+        "name": "Activity"
+      }
+    }
+  },
+  "issues": {
+    "unsupported_control": {
+      "title": "Birdfy control is not supported",
+      "description": "Birdfy exposes this control in the mobile app, but no stable public API endpoint has been verified for Home Assistant. The integration will keep the feature disabled until it can be validated safely."
+    }
+  }
+}

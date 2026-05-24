@@ -1,0 +1,16 @@
+title = "Birdfy secret scanning"
+
+[allowlist]
+description = "Allow only synthetic fixture values and documentation-safe placeholders."
+regexes = [
+  '''REDACTED_TEST_[A-Z_]+''',
+  '''SIMULATED_DEVICE_[0-9]+''',
+  '''example\.invalid''',
+  '''127\.0\.0\.1''',
+  '''localhost''',
+  '''old-token''',
+  '''new-token''',
+  '''old-refresh''',
+  '''new-refresh''',
+  '''test-password''',
+]

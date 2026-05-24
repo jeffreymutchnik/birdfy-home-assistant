@@ -1,0 +1,35 @@
+name: Hardware validation
+description: Share safe validation results from a real Birdfy device.
+title: "[Hardware]: "
+labels: ["hardware-validation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please redact serial numbers, device IDs, account names, media URLs, snapshots, and clips.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware version
+  - type: checkboxes
+    id: validated
+    attributes:
+      label: Validated features
+      options:
+        - label: Account login
+        - label: Device discovery
+        - label: Battery/Wi-Fi/firmware
+        - label: Snapshot
+        - label: Direct stream
+        - label: Motion event
+        - label: Bird/species event
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

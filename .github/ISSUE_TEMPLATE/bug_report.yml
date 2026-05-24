@@ -1,0 +1,37 @@
+name: Bug report
+description: Report a problem with the Birdfy integration.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include tokens, passwords, serial numbers, device IDs, snapshots, clips, or private media URLs.
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Birdfy model and firmware
+      description: Redact serial/device IDs.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant redacted logs
+      render: text
