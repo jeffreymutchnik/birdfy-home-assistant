@@ -2,7 +2,5 @@
   "name": "Birdfy",
   "content_in_root": false,
   "homeassistant": "2025.12.0",
-  "domains": ["binary_sensor", "button", "camera", "event", "image", "sensor"],
-  "iot_class": "cloud_polling",
   "render_readme": true
 }

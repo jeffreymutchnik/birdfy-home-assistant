@@ -53,13 +53,16 @@ def _check_manifest(manifest: dict[str, object]) -> list[str]:
 
 def _check_hacs(hacs: dict[str, object]) -> list[str]:
     findings: list[str] = []
-    domains = set(hacs.get("domains", []))
-    expected = {"binary_sensor", "button", "camera", "event", "image", "sensor"}
-    missing = expected - domains
-    if missing:
-        findings.append(f"hacs.json is missing domains: {', '.join(sorted(missing))}")
+    allowed_keys = {"content_in_root", "homeassistant", "name", "render_readme"}
+    extra_keys = set(hacs) - allowed_keys
+    if extra_keys:
+        findings.append(f"hacs.json has keys rejected by HACS action: {', '.join(sorted(extra_keys))}")
+    if hacs.get("name") != "Birdfy":
+        findings.append("hacs.json name should be Birdfy")
     if hacs.get("content_in_root") is not False:
         findings.append("hacs.json content_in_root should be false")
+    if not isinstance(hacs.get("homeassistant"), str):
+        findings.append("hacs.json homeassistant should be a version string")
     return findings
 
 
