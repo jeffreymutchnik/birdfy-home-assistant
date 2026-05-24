@@ -50,8 +50,10 @@ APPROVED_URL_HOSTS = {
     "capiv3.nvts.co",
     "developers.home-assistant.io",
     "support.birdfy.com",
+    "support.netvue.com",
     "community.home-assistant.io",
     "github.com",
+    "mediamtx.org",
     "owasp.org",
 }
 

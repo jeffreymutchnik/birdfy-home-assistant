@@ -36,6 +36,7 @@ This project does not:
 | Device list/status | Probably supported | Netvue web client references `devices/v3`; app docs show device list/status. | Implement read-only discovery. |
 | Snapshot/thumbnail | Probably supported | App/web docs support screenshots; device payloads may expose image URLs. | Expose only when URL is present. |
 | Live stream | Requires hardware validation | App/web support live view; web client references `play` and `pubstream`; community RTSP bridge exists. | Return direct URLs only; WebRTC/Kinesis unimplemented. |
+| App-initiated RTMP livestream | Requires hardware validation | Netvue documents RTMP/live streaming for selected Birdfy models; Birdfy app docs say compatible devices show **Live Stream** in device settings. | Support via manual local stream URL after a user-configured RTMP bridge such as MediaMTX. |
 | Motion/bird/species events | Requires hardware validation | Birdfy cloud/AI docs and community integrations show moments/highlights, but public web event page is not documented as a stable API. | Simulator-backed; poll real events only after endpoint validation. |
 | Highlight/Recap share UUID | Confirmed supported externally | Community `homeassistant-birdfy` uses share links for read-only AI summaries. | Recommended future low-risk feature. |
 | Battery/Wi-Fi/firmware/storage | Requires hardware validation | App settings display these; web payload likely includes some fields. | Expose only when present. |

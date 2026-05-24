@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added a local RTMP/MediaMTX bridge guide for Birdfy models that support app-initiated livestreaming but do not expose direct LAN RTSP/ONVIF/snapshot endpoints.
+
 ## 0.1.5
 
 - Added optional manual local stream and snapshot URL overrides for user-authorized camera media sources.

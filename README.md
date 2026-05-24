@@ -20,6 +20,8 @@ This is an early production scaffold. It includes:
 Hardware validation is still required before a tagged public release.
 See [docs/HARDWARE_VALIDATION.md](docs/HARDWARE_VALIDATION.md) for the next real-device test checklist.
 Use [docs/HARDWARE_TEST_RESULTS_TEMPLATE.md](docs/HARDWARE_TEST_RESULTS_TEMPLATE.md) to record sanitized results.
+If your Birdfy model exposes app-initiated RTMP livestreaming, see
+[docs/LOCAL_RTMP_MEDIAMTX.md](docs/LOCAL_RTMP_MEDIAMTX.md) for a local MediaMTX bridge test.
 
 ## Known Limitations
 
@@ -30,6 +32,8 @@ Write controls are intentionally not exposed yet. That includes siren, spotlight
 Birdfy live video may use AWS Kinesis/WebRTC data rather than a direct RTSP/HLS URL. Home Assistant camera streaming is enabled only when the API returns a direct stream URL that ffmpeg can consume.
 
 The integration does not bypass Birdfy app protections or paid cloud features. If you discover a lawful local media source for your own feeder, such as RTSP, HLS, or an HTTP snapshot endpoint, add it in **Configure > Options** as a manual stream or snapshot URL. Manual media overrides are treated as secrets and are redacted from diagnostics.
+
+Some Birdfy models expose **Live Stream** in the Birdfy app rather than a pullable LAN RTSP server. For those devices, the safe local-video path is to run a local RTMP receiver such as MediaMTX, configure the Birdfy app to publish to it, then add the MediaMTX RTSP/HLS output as the manual local stream URL.
 
 ## Local AI Direction
 
@@ -122,6 +126,8 @@ python tools/check_release_ready.py
 
 - Home Assistant developer docs: [manifest](https://developers.home-assistant.io/docs/creating_integration_manifest/), [config flow](https://developers.home-assistant.io/docs/core/integration/config_flow/), [DataUpdateCoordinator](https://developers.home-assistant.io/docs/integration_fetching_data/), [camera](https://developers.home-assistant.io/docs/core/entity/camera/), [image](https://developers.home-assistant.io/docs/core/entity/image/), [event](https://developers.home-assistant.io/docs/core/entity/event/), [diagnostics](https://developers.home-assistant.io/docs/core/integration/diagnostics/), [repairs](https://developers.home-assistant.io/docs/core/platform/repairs/), and [quality scale](https://developers.home-assistant.io/docs/core/integration-quality-scale/).
 - Birdfy support docs: [Birdfy app](https://support.birdfy.com/help/birdfy-app/), [web client](https://support.birdfy.com/help/birdfy-app/Web%20Client/), and [cloud service](https://support.birdfy.com/help/cloud-service/).
+- Birdfy/Netvue livestream docs: [Birdfy RTMP live stream](https://support.netvue.com/hc/en-us/sections/41039693517593-Birdfy-RTMP-Live-Stream) and [YouTube livestream setup](https://support.netvue.com/hc/en-us/articles/41039979574553-How-to-Live-Stream-Your-Birdfy-Camera-on-YouTube).
+- MediaMTX docs: [introduction](https://mediamtx.org/docs/kickoff/introduction) and [RTSP clients](https://mediamtx.org/docs/publish/rtsp-clients).
 - Community references: [Home Assistant community thread](https://community.home-assistant.io/t/birdfy-feeder-with-solar-panel/754121), [dakahler/homeassistant-birdfy](https://github.com/dakahler/homeassistant-birdfy), [sebsst/birdfy-integration](https://github.com/sebsst/birdfy-integration), and [sebsst/birdfy-rtsp](https://github.com/sebsst/birdfy-rtsp).
 
 ## Contributing

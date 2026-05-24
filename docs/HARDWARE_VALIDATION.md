@@ -58,6 +58,7 @@ Do not enable siren, spotlight, talk, microphone, privacy mode, notification tog
 - Open the camera entity in Home Assistant.
 - Confirm snapshot image loading works without exposing the URL in logs.
 - If live stream is available, confirm Home Assistant can play it through the camera card.
+- If the device does not expose direct RTSP/ONVIF/snapshot ports on the LAN, check whether the Birdfy app has **Device Settings > Live Stream**. If present, follow [LOCAL_RTMP_MEDIAMTX.md](LOCAL_RTMP_MEDIAMTX.md) to test app-initiated RTMP through a local MediaMTX bridge.
 - If live stream fails, record the sanitized response shape only. Do not paste full media URLs.
 - If you discover a lawful local RTSP/HLS/snapshot source, enter it in the Birdfy options flow and verify the Home Assistant camera renders from the manual media override.
 - Trigger or wait for a bird/motion event and confirm the latest event image updates.
