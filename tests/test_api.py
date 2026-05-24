@@ -627,6 +627,24 @@ def test_device_parser_accepts_percentage_strings() -> None:
     assert device.signal_level == 71
 
 
+def test_device_parser_accepts_live_payload_aliases() -> None:
+    device = BirdfyDevice.from_api(
+        {
+            "serialNumber": "SIMULATED_DEVICE_001",
+            "modelName": "Birdfy",
+            "connectStatus": "connected",
+            "batteryCapacity": "83%",
+            "wifiStrength": "66",
+            "fwVersion": "4.5.6",
+        }
+    )
+
+    assert device.online is True
+    assert device.battery_level == 83
+    assert device.signal_level == 66
+    assert device.firmware == "4.5.6"
+
+
 def test_event_parser_normalizes_common_event_aliases() -> None:
     assert BirdfyEvent.from_api({"eventType": "motion"}).event_type == EVENT_MOTION
     assert BirdfyEvent.from_api({"eventType": "bird"}).event_type == EVENT_BIRD

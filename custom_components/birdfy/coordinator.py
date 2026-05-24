@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -20,6 +21,7 @@ from .api import (
     BirdfyDevice,
     BirdfyError,
     BirdfyEvent,
+    redact_data,
 )
 from .const import DEFAULT_EVENT_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN, SIGNAL_EVENT
 
@@ -160,4 +162,67 @@ def redacted_device_payload(device: BirdfyDevice) -> dict[str, Any]:
             "supports_kvs_webrtc": device.capabilities.supports_kvs_webrtc,
         },
         "services_present": bool(device.services),
+        "raw_payload_shape": _raw_payload_shape(device.raw),
+    }
+
+
+DIAGNOSTIC_VALUE_KEYS = {
+    "active",
+    "battery",
+    "batteryCapacity",
+    "batteryLevel",
+    "batteryPercent",
+    "batteryPercentage",
+    "connected",
+    "connectionStatus",
+    "connectStatus",
+    "deviceModel",
+    "deviceOnline",
+    "deviceStatus",
+    "electricity",
+    "firmware",
+    "firmwareVersion",
+    "fwVersion",
+    "isActive",
+    "isConnected",
+    "isOnline",
+    "model",
+    "modelKey",
+    "modelName",
+    "netStatus",
+    "networkSignal",
+    "networkStatus",
+    "online",
+    "onlineStatus",
+    "power",
+    "powerPercent",
+    "productType",
+    "rssi",
+    "rssiLevel",
+    "signal",
+    "signalLevel",
+    "signalStrength",
+    "softVersion",
+    "softwareVersion",
+    "status",
+    "swVersion",
+    "version",
+    "versionName",
+    "wifi",
+    "wifiQuality",
+    "wifiSignal",
+    "wifiStrength",
+}
+
+
+def _raw_payload_shape(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Return enough raw payload shape to map real devices without private values."""
+    candidate_values = {
+        str(key): value
+        for key, value in payload.items()
+        if str(key) in DIAGNOSTIC_VALUE_KEYS and not isinstance(value, (dict, list))
+    }
+    return {
+        "top_level_keys": sorted(str(key) for key in payload),
+        "candidate_values": redact_data(candidate_values),
     }

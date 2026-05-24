@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Broadened real-device parsing aliases for online, firmware, battery, and Wi-Fi signal fields.
+- Added redacted raw payload-shape diagnostics so hardware testers can share field names and safe status candidates without leaking identifiers or media URLs.
+
 ## 0.1.3
 
 - Persist the Netvue web client identifier created during login and reuse it during Home Assistant setup, token refresh, and signed API requests.

@@ -211,6 +211,8 @@ async def test_redacted_device_payload_omits_private_identifiers() -> None:
     assert payload["has_name"] is True
     assert payload["has_snapshot_url"] is True
     assert payload["services_present"] is True
+    assert payload["raw_payload_shape"]["top_level_keys"] == ["serialNumber", "snapshotUrl"]
+    assert payload["raw_payload_shape"]["candidate_values"] == {}
     assert "REAL_DEVICE_ID" not in encoded
     assert "REAL_SERIAL" not in encoded
     assert "Private Yard Camera" not in encoded

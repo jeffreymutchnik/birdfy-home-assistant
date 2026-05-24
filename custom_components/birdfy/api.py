@@ -361,10 +361,66 @@ class BirdfyDevice:
             name=name,
             model=model,
             manufacturer=manufacturer,
-            firmware=_as_str(_first(payload, "firmware", "firmwareVersion", "swVersion", "version")),
-            online=_as_bool(_first(payload, "online", "isOnline", "onlineStatus", "status")),
-            battery_level=_coerce_percent(_first(payload, "battery", "batteryLevel", "batteryPercent", "power")),
-            signal_level=_coerce_percent(_first(payload, "wifi", "wifiSignal", "signal", "rssi", "signalLevel")),
+            firmware=_as_str(
+                _first(
+                    payload,
+                    "firmware",
+                    "firmwareVersion",
+                    "fwVersion",
+                    "softwareVersion",
+                    "softVersion",
+                    "swVersion",
+                    "version",
+                    "versionName",
+                )
+            ),
+            online=_as_bool(
+                _first(
+                    payload,
+                    "online",
+                    "isOnline",
+                    "onlineStatus",
+                    "deviceOnline",
+                    "connected",
+                    "isConnected",
+                    "connectStatus",
+                    "connectionStatus",
+                    "deviceStatus",
+                    "netStatus",
+                    "networkStatus",
+                    "active",
+                    "isActive",
+                    "status",
+                )
+            ),
+            battery_level=_coerce_percent(
+                _first(
+                    payload,
+                    "battery",
+                    "batteryLevel",
+                    "batteryPercent",
+                    "batteryPercentage",
+                    "batteryCapacity",
+                    "power",
+                    "powerPercent",
+                    "electricity",
+                )
+            ),
+            signal_level=_coerce_percent(
+                _first(
+                    payload,
+                    "wifi",
+                    "wifiSignal",
+                    "wifiStrength",
+                    "wifiQuality",
+                    "signal",
+                    "signalLevel",
+                    "signalStrength",
+                    "networkSignal",
+                    "rssi",
+                    "rssiLevel",
+                )
+            ),
             snapshot_url=snapshot_url,
             region=_as_str(_first(payload, "region")),
             capabilities=BirdfyCapabilities.from_payload(payload),
@@ -964,9 +1020,18 @@ def _as_bool(value: Any) -> bool | None:
         return None
     if isinstance(value, str):
         normalized = value.strip().lower()
-        if normalized in {"1", "true", "online", "on", "connected"}:
+        if normalized in {"1", "true", "online", "on", "connected", "active", "enabled", "yes"}:
             return True
-        if normalized in {"0", "false", "offline", "off", "disconnected"}:
+        if normalized in {
+            "0",
+            "false",
+            "offline",
+            "off",
+            "disconnected",
+            "inactive",
+            "disabled",
+            "no",
+        }:
             return False
     return None
 
