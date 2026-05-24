@@ -24,6 +24,10 @@ Battery/solar details:
 Observed LAN services:
 ```
 
+Do not record the Birdfy/Netvue app device ID in public notes. It is account and
+device identifying, but it usually does not identify the physical hardware
+family better than the FCC/model label.
+
 For repeatable single-device LAN checks, use
 [LOCAL_DEVICE_DISCOVERY.md](LOCAL_DEVICE_DISCOVERY.md). Do not use subnet scans
 or publish raw discovery output that contains real network identifiers.

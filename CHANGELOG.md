@@ -5,6 +5,7 @@
 - Added a local RTMP/MediaMTX bridge guide for Birdfy models that support app-initiated livestreaming but do not expose direct LAN RTSP/ONVIF/snapshot endpoints.
 - Added a local firmware/hardware bring-up checklist and ADR for pursuing owner-controlled operation without app-protection bypasses or credential extraction.
 - Added a public hardware evidence matrix for known Birdfy/Netvue model families, FCC IDs, and open-firmware research clues.
+- Added an owned-device hypothesis note that keeps private app device IDs out of hardware mapping while tracking the likely Birdfy Smart Feeder family.
 
 ## 0.1.5
 
