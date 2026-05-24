@@ -6,6 +6,8 @@ import logging
 from datetime import timedelta
 from typing import Any
 
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
@@ -29,12 +31,15 @@ from .const import (
     CONF_CAPIV3_BASE_URL,
     CONF_REFRESH_INTERVAL,
     CONF_TOKEN_DATA,
+    DOMAIN,
     PLATFORMS,
     STARTUP_MESSAGE,
 )
 from .coordinator import BirdfyCoordinator, BirdfyEventCoordinator, BirdfyRuntimeData
 
 LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA: vol.Schema = cv.config_entry_only_config_schema(DOMAIN)
 
 type BirdfyConfigEntry = ConfigEntry[BirdfyRuntimeData]
 
