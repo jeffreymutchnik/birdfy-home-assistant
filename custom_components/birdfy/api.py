@@ -56,12 +56,33 @@ EVENT_TYPE_ALIASES = {
     "video": EVENT_CLIP_READY,
 }
 
-AUTH_RET_CODES = {
-    10005,  # token expired, observed in Netvue web client enum handling
-    10006,  # refresh token expired
-    10007,  # refresh token mismatch
-    10008,  # signature invalid
+TIME_INVALID_RET_CODES = {
+    84,  # TimeInvalid in the public Netvue web client
 }
+
+TOKEN_REFRESH_RET_CODES = {
+    73,  # UserSignatureInvalid
+    113,  # TokenExpired
+    10005,  # legacy/observed token expired code
+}
+
+REAUTH_RET_CODES = {
+    59,  # LoginTokenInvalid
+    117,  # RefreshTokenNotMatch
+    118,  # RefreshTokenExpired
+    10006,  # legacy/observed refresh token expired code
+    10007,  # legacy/observed refresh token mismatch code
+}
+
+LOGIN_AUTH_RET_CODES = {
+    57,  # UserTempPwdExpire
+    58,  # UserTempPwdTokenNotExists
+    127,  # PasswordNotMatch
+    128,  # UserHasNeverLogin
+}
+
+# Backwards-compatible export for callers that imported the earlier constant.
+AUTH_RET_CODES = TOKEN_REFRESH_RET_CODES | REAUTH_RET_CODES
 
 SENSITIVE_KEYS = {
     "access_key",
@@ -423,6 +444,7 @@ class BirdfyClient:
         self._last_request = 0.0
         self._rate_lock = asyncio.Lock()
         self._refresh_lock = asyncio.Lock()
+        self._clock_skew_ms = 0
 
     @property
     def authenticated(self) -> bool:
@@ -455,15 +477,20 @@ class BirdfyClient:
         if self.tokens is None:
             raise BirdfyAuthError("Cannot refresh before login")
         async with self._refresh_lock:
-            payload = await self._request(
-                "post",
-                self.base_url,
-                "auth/refreshtoken",
-                data={"token": self.tokens.token, "refreshToken": self.tokens.refresh_token},
-                signed=True,
-                allow_refresh=False,
-                operation="token refresh",
-            )
+            try:
+                payload = await self._request(
+                    "post",
+                    self.base_url,
+                    "auth/refreshtoken",
+                    data={"token": self.tokens.token, "refreshToken": self.tokens.refresh_token},
+                    signed=True,
+                    allow_refresh=False,
+                    operation="token refresh",
+                )
+            except BirdfyApiError as err:
+                if err.status in (400, 401, 403) or err.code in REAUTH_RET_CODES:
+                    raise BirdfyAuthError("Birdfy token refresh failed; reauthentication is required") from err
+                raise
             if not isinstance(payload, Mapping):
                 raise BirdfyAuthError("Unexpected token refresh response")
             refreshed = dict(self.tokens.as_dict())
@@ -636,6 +663,28 @@ class BirdfyClient:
                 continue
 
             status = getattr(response, "status", None)
+            code = _as_int(payload.get("ret")) if isinstance(payload, Mapping) else None
+            if code in TIME_INVALID_RET_CODES and signed:
+                if self._apply_clock_skew(payload):
+                    headers = self._headers(signed=signed)
+                    continue
+                raise BirdfyApiError(
+                    "Birdfy cloud API returned an invalid-time response for "
+                    f"{_operation_label(operation, path)}",
+                    status=status,
+                    code=code,
+                    operation=operation,
+                )
+            if code in REAUTH_RET_CODES:
+                raise BirdfyAuthError(
+                    f"Birdfy authentication expired for {_operation_label(operation, path)}"
+                )
+            if code in LOGIN_AUTH_RET_CODES and operation == "login":
+                raise BirdfyAuthError("Birdfy rejected the account credentials for login")
+            if code in TOKEN_REFRESH_RET_CODES and signed and allow_refresh:
+                await self.refresh_tokens()
+                headers = self._headers(signed=signed)
+                continue
             if status == 429:
                 raise BirdfyRateLimitError(
                     f"Birdfy cloud API rate limit exceeded for {_operation_label(operation, path)}"
@@ -653,15 +702,11 @@ class BirdfyClient:
                     "Birdfy cloud API request failed for "
                     f"{_operation_label(operation, path)} (HTTP {status})",
                     status=status,
+                    code=code,
                     operation=operation,
                 )
             if isinstance(payload, Mapping):
-                code = _as_int(payload.get("ret"))
                 if code and code != 0:
-                    if code in AUTH_RET_CODES and signed and allow_refresh:
-                        await self.refresh_tokens()
-                        headers = self._headers(signed=signed)
-                        continue
                     raise BirdfyApiError(
                         "Birdfy cloud API returned an error for "
                         f"{_operation_label(operation, path)} (code {code})",
@@ -701,7 +746,7 @@ class BirdfyClient:
             return headers
         if self.tokens is None:
             raise BirdfyAuthError("A signed request requires authenticated tokens")
-        timestamp = str(int(time.time() * 1000))
+        timestamp = str(int(time.time() * 1000) - self._clock_skew_ms)
         headers.update(
             {
                 "x-nvs-version": SIGNATURE_VERSION,
@@ -717,6 +762,13 @@ class BirdfyClient:
             }
         )
         return headers
+
+    def _apply_clock_skew(self, payload: Mapping[str, Any]) -> bool:
+        server_time = _server_time_from_payload(payload)
+        if server_time is None:
+            return False
+        self._clock_skew_ms = int(time.time() * 1000) - server_time
+        return True
 
     async def _throttle(self) -> None:
         async with self._rate_lock:
@@ -808,6 +860,21 @@ def _operation_label(operation: str | None, path: str) -> str:
     if path.startswith(("http://", "https://")):
         return "remote request"
     return path
+
+
+def _server_time_from_payload(payload: Mapping[str, Any]) -> int | None:
+    msg = payload.get("msg")
+    if isinstance(msg, str):
+        try:
+            decoded = json.loads(msg)
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, Mapping):
+            server_time = _as_int(decoded.get("time"))
+            if server_time:
+                return server_time
+    server_time = _as_int(_first(payload, "time", "serverTime", "server_time"))
+    return server_time if server_time else None
 
 
 def _parse_ability(value: Any) -> Mapping[str, Any]:

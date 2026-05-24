@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from pathlib import Path
 
 import pytest
@@ -139,6 +140,52 @@ class DeviceListHttpFailureSession(FakeSession):
         return super().request(method, url, **kwargs)
 
 
+class NetvueTokenExpiredSession(FakeSession):
+    """Fixture session using current Netvue token-expired ret codes."""
+
+    def request(self, method, url, **kwargs):
+        self.calls.append((method, url, kwargs))
+        if url.endswith("auth/refreshtoken"):
+            self.refresh_count += 1
+            return FakeResponse({"token": "new-token", "refreshToken": "new-refresh"})
+        if url.endswith("devices/v3"):
+            if self.refresh_count == 0:
+                return FakeResponse({"ret": 113, "msg": "expired"})
+            return FakeResponse(_fixture("devices.json"))
+        return super().request(method, url, **kwargs)
+
+
+class RefreshRejectedSession(FakeSession):
+    """Fixture session that rejects refresh tokens like the live cloud can."""
+
+    def request(self, method, url, **kwargs):
+        self.calls.append((method, url, kwargs))
+        if url.endswith("devices/v3"):
+            return FakeResponse({"ret": 113, "msg": "expired"})
+        if url.endswith("auth/refreshtoken"):
+            self.refresh_count += 1
+            return FakeResponse({"ret": 118, "msg": "refresh token expired"}, status=400)
+        return super().request(method, url, **kwargs)
+
+
+class TimeInvalidSession(FakeSession):
+    """Fixture session that asks the client to correct local clock skew."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.time_invalid_count = 0
+        self.server_time = int(time.time() * 1000) - 60_000
+
+    def request(self, method, url, **kwargs):
+        self.calls.append((method, url, kwargs))
+        if url.endswith("devices/v3"):
+            if self.time_invalid_count == 0:
+                self.time_invalid_count += 1
+                return FakeResponse({"ret": 84, "msg": json.dumps({"time": self.server_time})})
+            return FakeResponse(_fixture("devices.json"))
+        return super().request(method, url, **kwargs)
+
+
 class RetryOnceSession(FakeSession):
     """Fixture session that has a transient transport failure."""
 
@@ -210,6 +257,81 @@ async def _test_list_devices_refreshes_expired_token() -> None:
     assert devices[0].battery_level == 87
     assert devices[0].capabilities.supports_snapshot is True
     assert devices[0].services["sdCard"] is True
+
+
+def test_list_devices_refreshes_current_netvue_expired_token_code() -> None:
+    asyncio.run(_test_list_devices_refreshes_current_netvue_expired_token_code())
+
+
+async def _test_list_devices_refreshes_current_netvue_expired_token_code() -> None:
+    session = NetvueTokenExpiredSession()
+    client = BirdfyClient(
+        session,
+        tokens=BirdfyTokens(
+            token="old-token",
+            refresh_token="old-refresh",
+            user_id="123456",
+            username="fixture-user@example.invalid",
+        ),
+        base_url="http://127.0.0.1/v1/",
+        request_interval=0,
+    )
+
+    devices = await client.list_devices()
+
+    assert session.refresh_count == 1
+    assert client.tokens.token == "new-token"
+    assert devices[0].identifier == "SIMULATED_DEVICE_001"
+
+
+def test_refresh_token_rejection_requires_reauth() -> None:
+    asyncio.run(_test_refresh_token_rejection_requires_reauth())
+
+
+async def _test_refresh_token_rejection_requires_reauth() -> None:
+    client = BirdfyClient(
+        RefreshRejectedSession(),
+        tokens=BirdfyTokens(
+            token="old-token",
+            refresh_token="old-refresh",
+            user_id="123456",
+            username="fixture-user@example.invalid",
+        ),
+        base_url="http://127.0.0.1/v1/",
+        request_interval=0,
+    )
+
+    with pytest.raises(BirdfyAuthError) as exc_info:
+        await client.list_devices()
+
+    message = str(exc_info.value)
+    assert "authentication expired" in message
+    assert "old-token" not in message
+    assert "old-refresh" not in message
+    assert "123456" not in message
+
+
+def test_time_invalid_response_updates_clock_skew_and_retries() -> None:
+    asyncio.run(_test_time_invalid_response_updates_clock_skew_and_retries())
+
+
+async def _test_time_invalid_response_updates_clock_skew_and_retries() -> None:
+    session = TimeInvalidSession()
+    client = BirdfyClient(
+        session,
+        tokens=BirdfyTokens(token="token", refresh_token="refresh", user_id="123456"),
+        base_url="http://127.0.0.1/v1/",
+        request_interval=0,
+    )
+
+    devices = await client.list_devices()
+
+    device_list_calls = [call for call in session.calls if call[1].endswith("devices/v3")]
+    first_time = int(device_list_calls[0][2]["headers"]["x-nvs-time"])
+    second_time = int(device_list_calls[1][2]["headers"]["x-nvs-time"])
+    assert devices[0].identifier == "SIMULATED_DEVICE_001"
+    assert len(device_list_calls) == 2
+    assert first_time - second_time >= 50_000
 
 
 def test_token_update_callback_runs_after_login_and_refresh() -> None:
